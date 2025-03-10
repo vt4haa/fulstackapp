@@ -7,7 +7,8 @@ class typeController {
         return res.json({type})
     }
     async getALL(req, res) {
-
+        const types = await Type.findAll();
+        return res.json(types)
     }
 }
 module.exports = new typeController
