@@ -1,7 +1,8 @@
 const uuid = require('uuid')
 const path = require('path');
-const {Device} = require('../models/models')
-const ApiError = require('../error/apiError')
+const {Device, DeviceInfo} = require('../models/models')
+const ApiError = require('../error/apiError');
+const { title } = require('process');
 class deviceController {
     async create(req, res, next) {
         try {
@@ -9,6 +10,16 @@ class deviceController {
             const {img} = req.files
             let filename = uuid.v4() + ".jpg"
             img.mv(path.resolve(__dirname, '..', 'static', filename))
+
+            if (info) {
+                info = JSON.parse(info)
+                info.forEach(i => DeviceInfo.create({
+                    title: i.title,
+                    description: i.description,
+                    deviceId: device.id
+                })
+            )
+        }
 
             const device = await Device.create({name, price, brandId, typeId, img: filename})
 
@@ -20,10 +31,33 @@ class deviceController {
         
     }
     async getAll(req, res) {
+        const {brandId, typeId, limit, page} = req.query
+        page = page || 1
+        limit = limit || 9
+        let offset = page * limit - limit
+        let device;
+        if (!brandId && !typeId) {
+            device = await Device.findAndCountAll(limit, offset)
+        }
+        if (brandId && !typeId){
+            device = await Device.findAndCountAll({where:{brandId}, limit, offset})
 
+        } if (!brandId && typeId) {
+            device = await Device.findAndCountAll({where:{typeId}, limit, offset})
+        }
+        if (brandId && typeId) {
+            device = await Device.findAndCountAll({where:{brandId, typeId}, limit, offset})
+        }
+        return res.json(device)
     }
     async getOnce(req,res) {
-
+        const {id} = req.params
+        const device = await Device.findOne({
+            where: {id},
+            include: [{model: DeviceInfo, as: 'info'}]
+        },
+    )
+        return res.json(device)
     }
 }
 module.exports = new deviceController
