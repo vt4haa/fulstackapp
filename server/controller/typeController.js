@@ -11,4 +11,4 @@ class typeController {
         return res.json(types)
     }
 }
-module.exports = new typeController
+module.exports = new typeController()

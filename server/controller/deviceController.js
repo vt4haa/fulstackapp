@@ -60,4 +60,4 @@ class deviceController {
         return res.json(device)
     }
 }
-module.exports = new deviceController
+module.exports = new deviceController()
